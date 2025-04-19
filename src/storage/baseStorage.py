@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-=======
-from models import user
-from models import event
-from models import user_age
-from models import user_is_laptop
 from models.user import User, FullUserInfo
 from models.event import Event
 from uuid import UUID
