@@ -1,4 +1,4 @@
--- Active: 1745056881566@@127.0.0.1@5434@regSysEvents
+-- Active: 1745059584062@@127.0.0.1@5434@regSysEvents
 -- +goose Up
 -- +goose StatementBegin
 
@@ -7,8 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(127) NOT NULL,
   surname VARCHAR(127) NOT NULL,
   papname VARCHAR(127) NOT NULL,
-  groupVuz VARCHAR(127) NOT NULL,
-  tgID BIGINT
+  groupVuz VARCHAR(127) NOT NULL
   -- tg_username VARCHAR(127),
 );
 
@@ -24,6 +23,13 @@ CREATE TABLE IF NOT EXISTS userIsLaptop (
   is_laptop BOOLEAN DEFAULT FALSE, 
   CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES users (id),
   CONSTRAINT is_laptop_notnull CHECK (is_laptop IS NOT NULL)
+);
+
+CREATE TABLE IF NOT EXISTS tgdata (
+  user_id UUID PRIMARY KEY,
+  tgID BIGINT,
+  tg_name VARCHAR(127) NOT NULL,
+  CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 CREATE TABLE IF NOT EXISTS event (
