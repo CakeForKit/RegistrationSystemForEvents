@@ -1,6 +1,13 @@
--- Active: 1745059584062@@127.0.0.1@5434@regSysEvents
+-- Active: 1745056881566@@127.0.0.1@5434@regSysEvents
 -- +goose Up
 -- +goose StatementBegin
+
+
+DROP TABLE IF EXISTS user_event;
+DROP TABLE IF EXISTS userAge;
+DROP TABLE IF EXISTS userIsLaptop;
+DROP TABLE IF EXISTS users;
+
 
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY,

@@ -16,15 +16,15 @@ class BaseStorage:
     def create_user(self, user_data: user.User) -> user.User:
         raise NotImplementedError
         
-    def update_user(self, user_id: UUID, update_data: dict) -> user.User:
-        raise NotImplementedError
+    # def update_user(self, user_id: UUID, update_data: dict) -> user.User:
+    #    raise NotImplementedError
         
     # Event methods
     #def create_event(self, event_data: event.Event) -> event.Event: Не для участника
     #    raise NotImplementedError
         
-    def get_event_by_id(self, event_id: UUID) -> Optional[event.Event]:
-        raise NotImplementedError
+    #def get_event_by_id(self, event_id: UUID) -> Optional[event.Event]:
+    #    raise NotImplementedError
         
     def get_all_events(self) -> List[event.Event]:
         raise NotImplementedError
