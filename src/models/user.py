@@ -4,6 +4,8 @@ from uuid import UUID
 from typing import Optional
 from typing import ClassVar
 
+from dataclasses import dataclass
+
 class User(BaseModel):
     id: UUID
     name: ClassVar[int] = 127
@@ -23,3 +25,16 @@ class User(BaseModel):
         if value is not None and value <= 0:
             raise ValueError("tgID должен быть положительным числом.")
         return value
+
+
+
+@dataclass
+class FullUserInfo:
+    id: UUID
+    name: str
+    surname: str
+    papname: str
+    groupVuz: str
+    age: int
+    is_laptop: bool
+    tg_name: str

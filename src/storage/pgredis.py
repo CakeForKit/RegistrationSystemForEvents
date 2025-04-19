@@ -1,130 +1,199 @@
 from typing import List, Optional
 from uuid import UUID
-from models import user, event
-import psycopg2
+from models.user import User
+from models.event import Event
+
+from __future__ import annotations
+
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class BaseStorage:
-    def get_user_by_tg_id(self, tg_id: int) -> Optional[user.User]:
-        cur = self.conn.cursor()
-        cur.execute("""
-            SELECT u.id, u.name, u.surname, u.papname, u.groupVuz, t.tgID
-            FROM users u
-            JOIN tgdata t ON t.user_id = u.id
-            WHERE t.tgID = %s
-        """, (tg_id,))
-        row = cur.fetchone()
-        cur.close()
-        if row:
-            return user.User(
-                id=row[0],
-                name=row[1],
-                surname=row[2],
-                papname=row[3],
-                groupVuz=row[4],
-                tgID=row[5]
-            )
-        return None
-        
-    def create_user(self, user_data: user.User) -> user.User:
-        cur = self.conn.cursor()
-        try:
-            cur.execute("""
-                INSERT INTO users (id, name, surname, papname, groupVuz)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (
-                str(user_data.id),
-                user_data.name,
-                user_data.surname,
-                user_data.papname,
-                user_data.groupVuz
-            ))
-            
-            if user_data.tgID:
-                cur.execute("""
-                    INSERT INTO tgdata (user_id, tgID, tg_name)
-                    VALUES (%s, %s, %s)
-                """, (
-                    str(user_data.id),
-                    user_data.tgID,
-                    f"{user_data.surname} {user_data.name}"
-                ))
-            
-            self.conn.commit()
-        except psycopg2.Error:
-            self.conn.rollback()
-            raise
-        finally:
-            cur.close()
-        return user_data
+    def __init__(self, session: AsyncSession):
+        self.session = session
 
-    def get_all_events(self) -> List[event.Event]:
-        cur = self.conn.cursor()
-        cur.execute("""
+    async def get_user_by_tg_id(self, tg_id: int) -> Optional[FullUserInfoDTO]:
+        query = text("""
+            SELECT u.id, u.name, u.surname, u.papname, u.groupvuz,
+                ua.age, ul.is_laptop, tg.tg_name
+            FROM users u
+            JOIN userage ua ON u.id = ua.user_id
+            JOIN userislaptop ul ON u.id = ul.user_id
+            JOIN tgdata tg ON tg.user_id = u.id
+            WHERE tg.tgID = :tg_id
+        """)
+        try:
+            result = await self.session.execute(query, {"tg_id": tg_id})
+            row = result.mappings().first()
+            if row:
+                return FullUserInfoDTO(
+                    id=row["id"],
+                    name=row["name"],
+                    surname=row["surname"],
+                    papname=row["papname"],
+                    groupVuz=row["groupvuz"],
+                    age=row["age"],
+                    is_laptop=row["is_laptop"],
+                    tg_name=row["tg_name"]
+                )
+            return None
+        except SQLAlchemyError as e:
+            print(f"Ошибка при получении пользователя по tg_id: {e}")
+            return None
+
+        
+    async def create_user(self, user_data: User) -> User:
+        try:
+            insert_user_query = text("""
+                INSERT INTO users (id, name, surname, papname, groupVuz)
+                VALUES (:id, :name, :surname, :papname, :groupVuz)
+            """)
+            await self.session.execute(insert_user_query, {
+                "id": str(user_data.id),
+                "name": user_data.name,
+                "surname": user_data.surname,
+                "papname": user_data.papname,
+                "groupVuz": user_data.groupVuz
+            })
+
+            await self.session.commit()
+            return user_data
+
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            print(f"Ошибка при создании пользователя: {e}")
+            raise
+
+    async def get_all_events(self) -> List[Event]:
+        query = text("""
             SELECT id, evname, evdate, place, evdescription
             FROM event
         """)
-        rows = cur.fetchall()
-        cur.close()
-        
-        events = []
-        for row in rows:
-            events.append(event.Event(
-                id=row[0],
-                name=row[1],
-                date=row[2],
-                place=row[3],
-                description=row[4]
-            ))
-        return events
 
-    def register_user_for_event(self, user_id: UUID, event_id: UUID) -> bool:
-        cur = self.conn.cursor()
         try:
-            cur.execute("""
-                INSERT INTO user_event (id, user_id, event_id)
-                VALUES (gen_random_uuid(), %s, %s)
-            """, (str(user_id), str(event_id)))
-            self.conn.commit()
+            result = await self.session.execute(query)
+            rows = result.mappings().all()
+
+            events = [
+                Event(
+                    id=row["id"],
+                    name=row["evname"],
+                    date=row["evdate"],
+                    place=row["place"],
+                    description=row["evdescription"]
+                )
+                for row in rows
+            ]
+            return events
+
+        except Exception as e:
+            print(f"Ошибка при получении событий: {e}")
+            return []
+
+    async def register_user_for_event(self, user_id: UUID, event_id: UUID) -> bool:
+        query = text("""
+            INSERT INTO user_event (id, user_id, event_id)
+            VALUES (gen_random_uuid(), :user_id, :event_id)
+        """)
+
+        try:
+            await self.session.execute(query, {
+                "user_id": str(user_id),
+                "event_id": str(event_id)
+            })
+            await self.session.commit()
             return True
-        except psycopg2.Error:
-            self.conn.rollback()
-            return False
-        finally:
-            cur.close()
 
-    def cancel_registration(self, user_id: UUID, event_id: UUID) -> bool:
-        cur = self.conn.cursor()
+        except SQLAlchemyError as e:
+            print(f"Ошибка при регистрации пользователя на событие: {e}")
+            await self.session.rollback()
+            return False
+
+    async def cancel_registration(self, user_id: UUID, event_id: UUID) -> None:
+        query = text("""
+            DELETE FROM user_event
+            WHERE user_id = :user_id AND event_id = :event_id
+        """)
+
         try:
-            cur.execute("""
-                DELETE FROM user_event
-                WHERE user_id = %s AND event_id = %s
-            """, (str(user_id), str(event_id)))
-            self.conn.commit()
-            return cur.rowcount > 0
-        except psycopg2.Error:
-            self.conn.rollback()
-            return False
-        finally:
-            cur.close()
+            result = await self.session.execute(query, {
+                "user_id": str(user_id),
+                "event_id": str(event_id)
+            })
+            await self.session.commit()
 
-    def get_user_registrations(self, user_id: UUID) -> List[event.Event]:
-        cur = self.conn.cursor()
-        cur.execute("""
+        except SQLAlchemyError as e:
+            print(f"Ошибка при отмене регистрации пользователя: {e}")
+            await self.session.rollback()
+
+    async def get_user_registrations(self, user_id: UUID) -> List[Event]:
+        query = text("""
             SELECT e.id, e.evname, e.evdate, e.place, e.evdescription
             FROM event e
             JOIN user_event ue ON ue.event_id = e.id
-            WHERE ue.user_id = %s
-        """, (str(user_id),))
-        rows = cur.fetchall()
-        cur.close()
+            WHERE ue.user_id = :user_id
+        """)
+
+        try:
+            result = await self.session.execute(query, {"user_id": str(user_id)})
+            rows = result.fetchall()
+
+            return [
+                Event(
+                    id=row[0],
+                    name=row[1],
+                    date=row[2],
+                    place=row[3],
+                    description=row[4]
+                )
+                for row in rows
+            ]
+        except SQLAlchemyError as e:
+            print(f"Ошибка при получении регистраций пользователя: {e}")
+            return []
+
+    async def update_user(self, update_user: FullUserInfoDTO) -> FullUserInfoDTO:
+        try:
+            query_users = text("""
+                UPDATE users
+                SET name = :name, surname = :surname, papname = :papname, groupVuz = :groupVuz
+                WHERE id = :id
+            """)
+            await self.session.execute(query_users, {
+                "id": update_user.id,
+                "name": update_user.name,
+                "surname": update_user.surname,
+                "papname": update_user.papname,
+                "groupVuz": update_user.groupVuz
+            })
+
+            query_age = text("""
+                UPDATE userAge
+                SET age = :age
+                WHERE user_id = :id
+            """)
+            await self.session.execute(query_age, {
+                "id": update_user.id,
+                "age": update_user.age
+            })
+
+            query_is_laptop = text("""
+                UPDATE userIsLaptop
+                SET is_laptop = :is_laptop
+                WHERE user_id = :id
+            """)
+            await self.session.execute(query_is_laptop, {
+                "id": update_user.id,
+                "is_laptop": update_user.is_laptop
+            })
+
+            await self.session.commit()
+            return update_user
+        except SQLAlchemyError as e:
+            print(f"Ошибка при обновлении пользователя: {e}")
+            await self.session.rollback()
+            return None
         
-        events = []
-        for row in rows:
-            events.append(event.Event(
-                id=row[0],
-                name=row[1],
-                date=row[2],
-                place=row[3],
-                description=row[4]
-            ))
-        return events
