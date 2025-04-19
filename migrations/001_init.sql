@@ -22,12 +22,6 @@ CREATE TABLE IF NOT EXISTS userAge (
 CREATE TABLE IF NOT EXISTS userIsLaptop (
   user_id UUID PRIMARY KEY,
   is_laptop BOOLEAN DEFAULT FALSE,
-  experience INT
-  link_to_rep TEXT, 
-  CONSTRAINT experience_positive CHECK (experience > 0),
-  CONSTRAINT gender CHECK (gender IS NOT NULL),
-  CONSTRAINT link_to_rep_notnull CHECK (link_to_rep IS NOT NULL),
-  CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES user (id)
   CONSTRAINT is_laptop_notnull CHECK (is_laptop IS NOT NULL)
 );
 
