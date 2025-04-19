@@ -1,4 +1,4 @@
--- Active: 1745054944224@@127.0.0.1@5434@regSysEvents
+-- Active: 1745056881566@@127.0.0.1@5434@regSysEvents
 -- Заполнение таблицы users
 INSERT INTO users (id, name, surname, papname, groupVuz, tgID) VALUES
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Иван', 'Иванов', 'Иванович', 'ИТ-101', 123456789),

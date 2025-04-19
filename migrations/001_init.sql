@@ -1,4 +1,4 @@
--- Active: 1745054944224@@127.0.0.1@5434@regSysEvents
+-- Active: 1745056881566@@127.0.0.1@5434@regSysEvents
 -- +goose Up
 -- +goose StatementBegin
 
@@ -21,12 +21,8 @@ CREATE TABLE IF NOT EXISTS userAge (
 
 CREATE TABLE IF NOT EXISTS userIsLaptop (
   user_id UUID PRIMARY KEY,
-<<<<<<< HEAD
   is_laptop BOOLEAN DEFAULT FALSE, 
   CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES users (id),
-=======
-  is_laptop BOOLEAN DEFAULT FALSE,
->>>>>>> d45a9585682aaede530ecf95e55c6a8ad107786a
   CONSTRAINT is_laptop_notnull CHECK (is_laptop IS NOT NULL)
 );
 
