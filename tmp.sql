@@ -8,10 +8,8 @@ from users
 WHERE id='a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'  
 
 -- Получение информации обо всех events в которых зарегестрирован user по id
-SELECT e.id, 
-FROM event e
-JOIN user_event ue ON e.id = ue.event_id
-WHERE ue.user_id = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+SELECT e.id, e.evname
+FROM event e;
 
 -- Получение user по tg_id
 SELECT 
