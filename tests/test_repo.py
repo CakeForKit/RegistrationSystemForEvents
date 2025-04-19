@@ -10,7 +10,7 @@ from models.user import User
 from models.tg import TG
 from storage.storage import Storage
 
-DATABASE_URL = "postgresql+asyncpg://puser:ppassword@localhost:5434/regSysEvents"
+DATABASE_URL = "postgresql+asyncpg://puser:ppassword@postgres_test:5436/regSysEvents"
 
 
 @pytest_asyncio.fixture
@@ -21,7 +21,7 @@ async def session():
     async with async_session_maker() as session:
         yield session
 
-    await engine.dispose()  # ВАЖНО: закрываем соединение после теста
+    await engine.dispose() 
 
 
 @pytest_asyncio.fixture
@@ -70,33 +70,12 @@ async def test_create_user(storage, test_user):
     assert created_user.name == "John"
     assert created_user.surname == "Doe"
 
-
-# # Тест для получения пользователя по tg_id
-# @pytest.mark.asyncio
-# async def test_get_user_by_tg_id(storage, test_user, test_tg):
-#     tg_id = 12637 
-#     await storage.create_user(test_user)
-#     session.add(test_tg)
-#     await session.commit()
-#     result = await storage.get_user_by_tg_id(tg_id)
-#     assert result is not None
-#     assert result.name == "John"
-#     assert result.surname == "Doe"
-
-
-# # Тест для регистрации пользователя на событие
-# @pytest_asyncio.mark.asyncio
-# async def test_register_user_for_event(storage, test_user, test_event):
-#     # Создаем пользователя и событие
-#     created_user = await storage.create_user(test_user)
-#     created_event = await storage.create_event(test_event)
-
-#     # Регистрируем пользователя на событие
-#     success = await storage.register_user_for_event(created_user.id, created_event.id)
-#     assert success is True
-
-#     # Проверяем, что регистрация прошла
-#     registrations = await storage.get_user_registrations(created_user.id)
-#     assert len(registrations) == 1
-#     assert registrations[0].id == created_event.id
+@pytest.mark.asyncio
+async def test_create_event(storage: Storage, test_event: Event):
+    created_event = await storage.create_event(test_event)
+    assert created_event.id == test_event.id
+    assert created_event.evname == test_event.evname
+    assert created_event.evdate == test_event.evdate
+    assert created_event.place == test_event.place
+    assert created_event.evdescription == test_event.evdescription
 
