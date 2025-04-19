@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from uuid import UUID
 from typing import Optional
 from typing import ClassVar
+from datetime import datetime
 
 
 class Event(BaseModel):
@@ -19,7 +20,7 @@ class Event(BaseModel):
         return value
 
     @validator('place')
-    def evname_not_empty(cls, value: str) -> str:
+    def place_not_empty(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("place не может быть пустым.")
         return value
