@@ -3,29 +3,24 @@
 
 CREATE TABLE IF NOT EXISTS user (
   id UUID PRIMARY KEY,
-  FIO VARCHAR(127),
+  name VARCHAR(127),
   group VARCHAR(127),
-  tg_username VARCHAR(127),
+  tgID BIGINT,
+  -- tg_username VARCHAR(127),
 
   CONSTRAINT FIO_notnull CHECK (FIO IS NOT NULL),
-  CONSTRAINT group_notnull CHECK (group IS NOT NULL),
-  CONSTRAINT tg_username_notnull CHECK (tg_username IS NOT NULL)
+  CONSTRAINT group_notnull CHECK (group IS NOT NULL)
 );
 
-CREATE TABLE IF NOT EXISTS user_type_1 (
-  id UUID PRIMARY KEY,
-  user_id UUID,
-  gender VARCHAR(10),
+CREATE TABLE IF NOT EXISTS userAge (
+  user_id UUID PRIMARY KEY,
   age INT,
   CONSTRAINT age_positive CHECK (age > 0),
-  CONSTRAINT gender CHECK (gender IS NOT NULL),
-  CONSTRAINT FIO_notnull CHECK (FIO IS NOT NULL),
   CONSTRAINT tg_user_id FOREIGN KEY (user_id) REFERENCES user (id)
 );
 
-CREATE TABLE IF NOT EXISTS user_type_2 (
-  id UUID PRIMARY KEY,
-  user_id UUID,
+CREATE TABLE IF NOT EXISTS userIsLaptop (
+  user_id UUID PRIMARY KEY,
   is_laptop BOOLEAN DEFAULT FALSE,
   experience INT
   link_to_rep TEXT, 
