@@ -93,7 +93,7 @@ class BaseStorage:
             print(f"Ошибка при получении пользователя по tg_id: {e}")
             return None
 
-        async def get_user_events(self, user_id: UUID) -> List[Event]:
+    async def get_user_events(self, user_id: UUID) -> List[Event]:
         query = text("""
             SELECT e.id, e.evname, e.evdate, e.place, e.evdescription
             FROM event e
