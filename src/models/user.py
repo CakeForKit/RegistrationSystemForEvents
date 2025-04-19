@@ -26,13 +26,13 @@ class User(BaseModel):
         return value
 
     @field_validator("papname")
-    def name_not_empty_string(cls, value: str) -> str:
+    def papname_not_empty_string(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("Поля papname не могут быть пустыми.")
         return value
 
     @field_validator("groupVuz")
-    def name_not_empty_string(cls, value: str) -> str:
+    def groupVuz_not_empty_string(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("Поля groupVuz не могут быть пустыми.")
         return value
