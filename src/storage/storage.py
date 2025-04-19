@@ -122,7 +122,7 @@ class Storage:
     async def get_all_fields_user(self, tg_id: int) -> Optional[FullUserInfo]:
         return self.get_user_by_tg_id(tg_id)
 
-    async def get_fields_for_event():
+    async def get_fields_for_event() -> List[str]:
         return ["a", "f", "g"]
 
     async def register_user_for_event(self, user_id: UUID, event_id: UUID) -> bool:
