@@ -1,0 +1,117 @@
+-- +goose Up
+-- +goose StatementBegin
+
+CREATE TABLE IF NOT EXISTS tg_user (
+  id UUID PRIMARY KEY,
+  FIO VARCHAR(127),
+  group VARCHAR(127),
+  tg_username VARCHAR(127),
+
+  CONSTRAINT FIO_notnull CHECK (FIO IS NOT NULL),
+  CONSTRAINT group_notnull CHECK (group IS NOT NULL),
+  CONSTRAINT tg_username_notnull CHECK (tg_username IS NOT NULL)
+);
+
+CREATE TABLE IF NOT EXISTS user_type_1 (
+  id UUID PRIMARY KEY,
+  user_id UUID,
+  gender VARCHAR(10),
+  age INT,
+  CONSTRAINT age_positive CHECK (age > 0),
+  CONSTRAINT gender CHECK (gender IS NOT NULL),
+  CONSTRAINT FIO_notnull CHECK (FIO IS NOT NULL),
+  CONSTRAINT tg_user_id FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
+CREATE TABLE IF NOT EXISTS user_type_2 (
+  id UUID PRIMARY KEY,
+  user_id UUID,
+  is_laptop BOOLEAN DEFAULT FALSE,
+  experience INT
+  CONSTRAINT experience_positive CHECK (experience > 0),
+  CONSTRAINT gender CHECK (gender IS NOT NULL),
+  CONSTRAINT FIO_notnull CHECK (FIO IS NOT NULL),
+  CONSTRAINT tg_user_id FOREIGN KEY (user_id) REFERENCES user (id)
+  CONSTRAINT is_laptop_notnull CHECK (is_laptop IS NOT NULL)
+);
+
+CREATE TABLE IF NOT EXISTS event (
+  id UUID PRIMARY KEY,
+  evname VARCHAR(255),
+  evdate TIMESTAMP,
+  place TEXT,
+  evdescription TEXT,
+
+  CONSTRAINT evname_notnull CHECK (evname IS NOT NULL),
+  CONSTRAINT evname_uniq UNIQUE (evname),
+  CONSTRAINT evdate_notnull CHECK (evdate IS NOT NULL),
+  CONSTRAINT place_notnull CHECK (place IS NOT NULL),
+  CONSTRAINT evdescription_notnull CHECK (evdescription IS NOT NULL),
+);
+
+CREATE TABLE IF NOT EXISTS event_member (
+  id UUID PRIMARY KEY,
+  event_id UUID,
+  activist_id UUID,
+  is_chief BOOLEAN,
+  CONSTRAINT event_id_notnull CHECK (event_id IS NOT NULL),
+  CONSTRAINT event_id_fkey FOREIGN KEY (event_id) REFERENCES event (id),
+  CONSTRAINT activist_id_notnull CHECK (activist_id IS NOT NULL),
+  CONSTRAINT activist_id_fkey FOREIGN KEY (activist_id) REFERENCES activist (id),
+  CONSTRAINT is_chief_notnull CHECK (is_chief IS NOT NULL)
+);
+
+-- To ensure only one chief per event
+CREATE UNIQUE INDEX ON event_member (event_id, is_chief)
+WHERE
+  is_chief = TRUE;
+
+CREATE TYPE url_type AS ENUM('disk.yandex');
+
+CREATE TABLE IF NOT EXISTS report (
+  id UUID PRIMARY KEY,
+  event_member_id UUID,
+  url VARCHAR(255),
+  url_type url_type,
+  created_at TIMESTAMP,
+  CONSTRAINT event_member_id_notnull CHECK (event_member_id IS NOT NULL),
+  CONSTRAINT event_member_id_fkey FOREIGN KEY (event_member_id) REFERENCES event_member (id),
+  CONSTRAINT url_notnull CHECK (url IS NOT NULL),
+  CONSTRAINT url_type_notnull CHECK (url_type IS NOT NULL),
+  CONSTRAINT created_at_notnull CHECK (created_at IS NOT NULL)
+);
+
+CREATE TABLE canceled_event (
+  event_id UUID PRIMARY KEY,
+  canceled_by UUID,
+  canceled_at TIMESTAMP,
+  CONSTRAINT canceled_by_notnull CHECK (canceled_by IS NOT NULL),
+  CONSTRAINT canceled_at_notnull CHECK (canceled_at IS NOT NULL),
+  CONSTRAINT canceled_by_fkey FOREIGN KEY (canceled_by) REFERENCES activist (id)
+);
+
+CREATE TABLE completed_event (
+  event_id UUID PRIMARY KEY,
+  completed_by UUID,
+  completed_at TIMESTAMP,
+  CONSTRAINT completed_by_notnull CHECK (completed_by IS NOT NULL),
+  CONSTRAINT completed_at_notnull CHECK (completed_at IS NOT NULL),
+  CONSTRAINT completed_by_fkey FOREIGN KEY (completed_by) REFERENCES activist (id)
+);
+
+CREATE TABLE notification (
+  id UUID PRIMARY KEY,
+  send_time TIMESTAMP,
+  send_to UUID,
+  done BOOLEAN DEFAULT FALSE,
+  message text,
+  created_at TIMESTAMP,
+  created_by UUID,
+  CONSTRAINT send_time_notnull CHECK (send_time IS NOT NULL),
+  CONSTRAINT done_notnull CHECK (done IS NOT NULL),
+  CONSTRAINT message_notnull CHECK (message IS NOT NULL),
+  CONSTRAINT created_at_notnull CHECK (created_at IS NOT NULL),
+  CONSTRAINT created_by_notnull CHECK (created_by IS NOT NULL),
+  CONSTRAINT created_by_fkey FOREIGN KEY (created_by) REFERENCES tg_admin (id),
+  CONSTRAINT send_to_fkey FOREIGN KEY (send_to) REFERENCES activist (id)
+);
