@@ -50,17 +50,17 @@ services:
         networks:
             - postgres-bas
     
-    redis-bas:
-        container_name: redis-bas
-        hostname: redis-bas
-        restart: unless-stopped
-        build:
-            context: ./redis
-            dockerfile: ./Dockerfile
-        # env_file:
-        #     - redis.env
-        networks:
-            - redis-bas
+    # redis-bas:
+    #     container_name: redis-bas
+    #     hostname: redis-bas
+    #     restart: unless-stopped
+    #     build:
+    #         context: ./
+    #         dockerfile: ./Dockerfile
+    #     # env_file:
+    #     #     - redis.env
+    #     networks:
+    #         - redis-bas
 
 networks:
     postgres-bas:
