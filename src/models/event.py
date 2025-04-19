@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from uuid import UUID
 from typing import Optional
@@ -8,7 +8,7 @@ from datetime import datetime
 
 class Event(BaseModel):
     id: UUID
-    evname: ClassVar[int] = 255
+    evname: str
     evdate: datetime
     place: str
     evdescription: str

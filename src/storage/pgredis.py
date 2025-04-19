@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from typing import List, Optional
 from uuid import UUID
-from models.user import User
+from models.user import User, FullUserInfo
 from models.event import Event
 
-from __future__ import annotations
 
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
@@ -15,7 +16,7 @@ class BaseStorage:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_user_by_tg_id(self, tg_id: int) -> Optional[FullUserInfoDTO]:
+    async def get_user_by_tg_id(self, tg_id: int) -> Optional[FullUserInfo]:
         query = text("""
             SELECT u.id, u.name, u.surname, u.papname, u.groupvuz,
                 ua.age, ul.is_laptop, tg.tg_name
@@ -29,7 +30,7 @@ class BaseStorage:
             result = await self.session.execute(query, {"tg_id": tg_id})
             row = result.mappings().first()
             if row:
-                return FullUserInfoDTO(
+                return FullUserInfo(
                     id=row["id"],
                     name=row["name"],
                     surname=row["surname"],
@@ -80,10 +81,10 @@ class BaseStorage:
             events = [
                 Event(
                     id=row["id"],
-                    name=row["evname"],
-                    date=row["evdate"],
+                    evname=row["evname"],
+                    evdate=row["evdate"],
                     place=row["place"],
-                    description=row["evdescription"]
+                    evdescription=row["evdescription"]
                 )
                 for row in rows
             ]
@@ -119,7 +120,7 @@ class BaseStorage:
         """)
 
         try:
-            result = await self.session.execute(query, {
+            await self.session.execute(query, {
                 "user_id": str(user_id),
                 "event_id": str(event_id)
             })
@@ -144,10 +145,10 @@ class BaseStorage:
             return [
                 Event(
                     id=row[0],
-                    name=row[1],
-                    date=row[2],
+                    evname=row[1],
+                    evdate=row[2],
                     place=row[3],
-                    description=row[4]
+                    evdescription=row[4]
                 )
                 for row in rows
             ]
@@ -155,7 +156,7 @@ class BaseStorage:
             print(f"Ошибка при получении регистраций пользователя: {e}")
             return []
 
-    async def update_user(self, update_user: FullUserInfoDTO) -> FullUserInfoDTO:
+    async def update_user(self, update_user: FullUserInfo) -> Optional[FullUserInfo]:
         try:
             query_users = text("""
                 UPDATE users
