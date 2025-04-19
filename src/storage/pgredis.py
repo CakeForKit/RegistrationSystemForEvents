@@ -16,6 +16,54 @@ class BaseStorage:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def get_all_events(self) -> List[Event]:
+        query = text("""
+            SELECT id, evname, evdate, place, evdescription
+            FROM event
+        """)
+
+        try:
+            result = await self.session.execute(query)
+            rows = result.mappings().all()
+
+            events = [
+                Event(
+                    id=row["id"],
+                    evname=row["evname"],
+                    evdate=row["evdate"],
+                    place=row["place"],
+                    evdescription=row["evdescription"]
+                )
+                for row in rows
+            ]
+            return events
+
+        except Exception as e:
+            print(f"Ошибка при получении событий: {e}")
+            return []
+
+    async def create_user(self, user_data: User) -> User:
+        try:
+            insert_user_query = text("""
+                INSERT INTO users (id, name, surname, papname, groupVuz)
+                VALUES (:id, :name, :surname, :papname, :groupVuz)
+            """)
+            await self.session.execute(insert_user_query, {
+                "id": str(user_data.id),
+                "name": user_data.name,
+                "surname": user_data.surname,
+                "papname": user_data.papname,
+                "groupVuz": user_data.groupVuz
+            })
+
+            await self.session.commit()
+            return user_data
+
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            print(f"Ошибка при создании пользователя: {e}")
+            raise
+
     async def get_user_by_tg_id(self, tg_id: int) -> Optional[FullUserInfo]:
         query = text("""
             SELECT u.id, u.name, u.surname, u.papname, u.groupvuz,
@@ -45,92 +93,7 @@ class BaseStorage:
             print(f"Ошибка при получении пользователя по tg_id: {e}")
             return None
 
-        
-    async def create_user(self, user_data: User) -> User:
-        try:
-            insert_user_query = text("""
-                INSERT INTO users (id, name, surname, papname, groupVuz)
-                VALUES (:id, :name, :surname, :papname, :groupVuz)
-            """)
-            await self.session.execute(insert_user_query, {
-                "id": str(user_data.id),
-                "name": user_data.name,
-                "surname": user_data.surname,
-                "papname": user_data.papname,
-                "groupVuz": user_data.groupVuz
-            })
-
-            await self.session.commit()
-            return user_data
-
-        except SQLAlchemyError as e:
-            await self.session.rollback()
-            print(f"Ошибка при создании пользователя: {e}")
-            raise
-
-    async def get_all_events(self) -> List[Event]:
-        query = text("""
-            SELECT id, evname, evdate, place, evdescription
-            FROM event
-        """)
-
-        try:
-            result = await self.session.execute(query)
-            rows = result.mappings().all()
-
-            events = [
-                Event(
-                    id=row["id"],
-                    evname=row["evname"],
-                    evdate=row["evdate"],
-                    place=row["place"],
-                    evdescription=row["evdescription"]
-                )
-                for row in rows
-            ]
-            return events
-
-        except Exception as e:
-            print(f"Ошибка при получении событий: {e}")
-            return []
-
-    async def register_user_for_event(self, user_id: UUID, event_id: UUID) -> bool:
-        query = text("""
-            INSERT INTO user_event (id, user_id, event_id)
-            VALUES (gen_random_uuid(), :user_id, :event_id)
-        """)
-
-        try:
-            await self.session.execute(query, {
-                "user_id": str(user_id),
-                "event_id": str(event_id)
-            })
-            await self.session.commit()
-            return True
-
-        except SQLAlchemyError as e:
-            print(f"Ошибка при регистрации пользователя на событие: {e}")
-            await self.session.rollback()
-            return False
-
-    async def cancel_registration(self, user_id: UUID, event_id: UUID) -> None:
-        query = text("""
-            DELETE FROM user_event
-            WHERE user_id = :user_id AND event_id = :event_id
-        """)
-
-        try:
-            await self.session.execute(query, {
-                "user_id": str(user_id),
-                "event_id": str(event_id)
-            })
-            await self.session.commit()
-
-        except SQLAlchemyError as e:
-            print(f"Ошибка при отмене регистрации пользователя: {e}")
-            await self.session.rollback()
-
-    async def get_user_registrations(self, user_id: UUID) -> List[Event]:
+        async def get_user_events(self, user_id: UUID) -> List[Event]:
         query = text("""
             SELECT e.id, e.evname, e.evdate, e.place, e.evdescription
             FROM event e
@@ -155,6 +118,34 @@ class BaseStorage:
         except SQLAlchemyError as e:
             print(f"Ошибка при получении регистраций пользователя: {e}")
             return []
+        
+    async def get_fields_user():
+        pass
+
+    async def get_fields_for_event():
+        pass
+
+    async def register_user_for_event(self, user_id: UUID, event_id: UUID) -> bool:
+        query = text("""
+            INSERT INTO user_event (id, user_id, event_id)
+            VALUES (gen_random_uuid(), :user_id, :event_id)
+        """)
+
+        try:
+            await self.session.execute(query, {
+                "user_id": str(user_id),
+                "event_id": str(event_id)
+            })
+            await self.session.commit()
+            return True
+
+        except SQLAlchemyError as e:
+            print(f"Ошибка при регистрации пользователя на событие: {e}")
+            await self.session.rollback()
+            return False
+
+    # async def update_user_fields():
+    #     pass
 
     async def update_user(self, update_user: FullUserInfo) -> Optional[FullUserInfo]:
         try:
@@ -198,3 +189,22 @@ class BaseStorage:
             await self.session.rollback()
             return None
         
+    async def cancel_registration(self, user_id: UUID, event_id: UUID) -> None:
+        query = text("""
+            DELETE FROM user_event
+            WHERE user_id = :user_id AND event_id = :event_id
+        """)
+
+        try:
+            await self.session.execute(query, {
+                "user_id": str(user_id),
+                "event_id": str(event_id)
+            })
+            await self.session.commit()
+
+        except SQLAlchemyError as e:
+            print(f"Ошибка при отмене регистрации пользователя: {e}")
+            await self.session.rollback()
+
+
+
