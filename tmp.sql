@@ -1,0 +1,6 @@
+-- Active: 1745054944224@@127.0.0.1@5434@regSysEvents
+SELECT TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+
+
+select * from users
