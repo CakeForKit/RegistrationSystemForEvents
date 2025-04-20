@@ -18,7 +18,6 @@ DATABASE_URL = "postgresql+asyncpg://puser:ppassword@postgres_test:5432/regSysEv
 async def session():
     engine = create_async_engine(DATABASE_URL, echo=True)
     
-    # Создаем все таблицы
     async with engine.begin() as conn:
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS users (
