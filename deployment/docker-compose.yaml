@@ -1,17 +1,4 @@
 services:
-    app:
-        container_name: app
-        build:
-            context: ../
-            dockerfile: ./Dockerfile
-        restart: always
-        ports: 
-            - "3012:3012"
-        networks:
-            - postgres-db
-            - appnet
-
-
     postgres:
         container_name: PgDBRegSysEvents
         hostname: postgres

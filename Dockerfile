@@ -7,10 +7,15 @@ WORKDIR /app
 # Устанавливаем все необходимые зависимости для линтинга и тестов
 RUN pip install --no-cache-dir flake8 pylint pytest pytest-asyncio sqlalchemy pydantic asyncpg
 
-# Копируем все файлы проекта в контейнер
-COPY . .
-ENV PYTHONPATH="/app/src"
-# Выполняем линтинг и тесты
-CMD flake8 ./src/models ./src/storage tests && pytest tests/test_repo.py --asyncio-mode=auto
+COPY src /app/src
+COPY src/tests /app/src/tests
+COPY ./deployment/tests /app/tests
 
-RUN pytest tests
+ENV PYTHONPATH=/app/src
+
+# Делаем test.sh исполняемым
+RUN ls
+RUN chmod +x /app/tests/test.sh
+
+# Запуск тестов
+ENTRYPOINT ["/app/tests/test.sh"]
