@@ -1,0 +1,35 @@
+services:
+  test-db:
+    container_name: test-db
+    hostname: postgres_test
+    image: postgres:15-alpine
+    env_file:
+      - db_test.env
+    ports:
+      - "5435:5432"
+    volumes:
+        - dataRegSysEvents:/var/lib/postgresql/regSysEventsTest/data
+    networks:
+        # - postgres-db
+        - test-net
+
+  test-app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: test-app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://puser:ppassword@postgres_test:5432/regSysEventsTest
+    depends_on:
+      - test-db
+    networks:
+      - test-net
+
+volumes:  
+    dataRegSysEvents: 
+
+networks:
+    postgres-db:
+        name: postgres-db
+    test-net:
+        name: test-net
